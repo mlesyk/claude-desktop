@@ -12,7 +12,7 @@ fi
 
 # Print system information
 echo "System Information:"
-echo "Distribution: $(cat /etc/os-release | grep "PRETTY_NAME" | cut -d'"' -f2)"
+echo "Distribution: $(grep "PRETTY_NAME" /etc/os-release | cut -d'"' -f2)"
 echo "Debian version: $(cat /etc/debian_version)"
 
 # Function to check if a command exists
@@ -57,10 +57,10 @@ for cmd in p7zip wget wrestool icotool convert npx dpkg-deb; do
 done
 
 # Install system dependencies if any
-if [ ! -z "$DEPS_TO_INSTALL" ]; then
+if [ -n "$DEPS_TO_INSTALL" ]; then
     echo "Installing system dependencies: $DEPS_TO_INSTALL"
     sudo apt update
-    sudo apt install -y $DEPS_TO_INSTALL
+    sudo apt install -y "$DEPS_TO_INSTALL"
     echo "System dependencies installed successfully"
 fi
 
