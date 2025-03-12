@@ -10,12 +10,6 @@ if [ ! -f "/etc/debian_version" ]; then
     exit 1
 fi
 
-# Check for root/sudo
-if [ "$EUID" -ne 0 ]; then
-    echo "Please run with sudo to install dependencies"
-    exit 1
-fi
-
 # Print system information
 echo "System Information:"
 echo "Distribution: $(cat /etc/os-release | grep "PRETTY_NAME" | cut -d'"' -f2)"
@@ -65,8 +59,8 @@ done
 # Install system dependencies if any
 if [ ! -z "$DEPS_TO_INSTALL" ]; then
     echo "Installing system dependencies: $DEPS_TO_INSTALL"
-    apt update
-    apt install -y $DEPS_TO_INSTALL
+    sudo apt update
+    sudo apt install -y $DEPS_TO_INSTALL
     echo "System dependencies installed successfully"
 fi
 
