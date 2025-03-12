@@ -316,7 +316,9 @@ fi
 
 if [ -f "$DEB_FILE" ]; then
     echo "✓ Package built successfully at: $DEB_FILE"
-    echo "🎉 Done! You can now install the package with: sudo dpkg -i $DEB_FILE"
+    echo "🎉 Installing the package..."
+    sudo dpkg -i "$DEB_FILE"
+    echo "✅ Claude Desktop has been installed successfully!"
 else
     echo "❌ Package file not found at expected location: $DEB_FILE"
     exit 1
