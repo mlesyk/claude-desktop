@@ -38,7 +38,7 @@ git clone https://github.com/aaddrick/claude-desktop-debian.git
 cd claude-desktop-debian
 
 # Build and install the package
-./build-deb.sh
+./install-claude-desktop.sh
 sudo dpkg -i ./build/electron-app/claude-desktop_0.8.0_amd64.deb
 
 # The script will automatically:
