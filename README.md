@@ -1,9 +1,14 @@
-## LOOKING FOR NEW MAINTAINER
-I've had fun with this, but I'm ready to pass the torch. Let me know if you'd like to take a swing at this!
-
 ***THIS IS AN UNOFFICIAL BUILD SCRIPT!***
 
 If you run into an issue with this build script, make an issue here. Don't bug Anthropic about it - they already have enough on their plates.
+
+# TLDR
+To just build and install Claude Desktop on a Debian-based system, run the following command in your terminal:
+
+```bash
+
+wget -O- https://raw.githubusercontent.com/emsi/claude-desktop/refs/heads/main/install-claude-desktop.sh | bash
+```
 
 # Claude Desktop for Linux
 
@@ -32,8 +37,8 @@ For Debian-based distributions (Debian, Ubuntu, Linux Mint, MX Linux, etc.), you
 git clone https://github.com/aaddrick/claude-desktop-debian.git
 cd claude-desktop-debian
 
-# Build the package
-sudo ./build-deb.sh
+# Build and install the package
+./build-deb.sh
 sudo dpkg -i ./build/electron-app/claude-desktop_0.8.0_amd64.deb
 
 # The script will automatically:
@@ -47,10 +52,6 @@ Requirements:
 - Any Debian-based Linux distribution
 - Node.js >= 12.0.0 and npm
 - Root/sudo access for dependency installation
-
-## 2. NixOS Implementation
-
-For NixOS users, please refer to [k3d3's claude-desktop-linux-flake](https://github.com/k3d3/claude-desktop-linux-flake) repository. Their implementation is specifically designed for NixOS and provides the original Nix flake that inspired this project.
 
 # How it works
 
