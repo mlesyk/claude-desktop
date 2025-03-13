@@ -19,6 +19,12 @@ if [ ! -d "$SANDBOX_HOME" ]; then
   echo 'PS1="\[\e[48;5;208m\e[97m\]sandbox\[\e[0m\] \[\e[1;32m\]\h:\w\[\e[0m\]$ "' >> "${SANDBOX_HOME}/.bashrc"
 fi
 
+if [ $SHELL_MODE -eq 1 ]; then
+  CMD=(/bin/bash)
+else
+  CMD=(/bin/bash -c "source ~/.bashrc && claude-desktop")
+fi
+
 bwrap \
   --ro-bind /sbin /sbin \
   --ro-bind /bin /bin \
@@ -39,9 +45,5 @@ bwrap \
   --setenv PATH "/usr/bin:/bin:/usr/sbin:/sbin" \
   --setenv DISPLAY "${DISPLAY}" \
   --setenv DBUS_SESSION_BUS_ADDRESS "${DBUS_SESSION_BUS_ADDRESS}" \
-  $(if [ $SHELL_MODE -eq 1 ]; then 
-    echo "/bin/bash"
-  else
-    echo "/bin/bash -c 'source ~/.bashrc && claude-desktop'"
-  fi)
+  "${CMD[@]}"
 
