@@ -3,12 +3,6 @@
 # Set SANDBOX_HOME environment variable
 SANDBOX_HOME=~/agent
 
-# Check if the first argument is "shell"
-SHELL_MODE=0
-if [ "$1" = "shell" ]; then
-  SHELL_MODE=1
-fi
-
 
 # Check if SANDBOX_HOME exists, if not create it and set ownership
 if [ ! -d "$SANDBOX_HOME" ]; then
@@ -17,12 +11,6 @@ if [ ! -d "$SANDBOX_HOME" ]; then
   cp -a ~/.bashrc "${SANDBOX_HOME}"
 
   echo 'PS1="\[\e[48;5;208m\e[97m\]sandbox\[\e[0m\] \[\e[1;32m\]\h:\w\[\e[0m\]$ "' >> "${SANDBOX_HOME}/.bashrc"
-fi
-
-if [ $SHELL_MODE -eq 1 ]; then
-  CMD=(/bin/bash)
-else
-  CMD=(/bin/bash -c "source ~/.bashrc && claude-desktop")
 fi
 
 bwrap \
@@ -45,5 +33,5 @@ bwrap \
   --setenv PATH "/usr/bin:/bin:/usr/sbin:/sbin" \
   --setenv DISPLAY "${DISPLAY}" \
   --setenv DBUS_SESSION_BUS_ADDRESS "${DBUS_SESSION_BUS_ADDRESS}" \
-  "${CMD[@]}"
+  /bin/bash
 
