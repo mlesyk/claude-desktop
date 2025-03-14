@@ -1,36 +1,8 @@
 #!/bin/bash
 
-# Set SANDBOX_HOME environment variable
-SANDBOX_HOME=~/agent
-
-
-# Check if SANDBOX_HOME exists, if not create it and set ownership
-if [ ! -d "$SANDBOX_HOME" ]; then
-  mkdir -p "$SANDBOX_HOME"
-  cp -a ~/.bashrc "${SANDBOX_HOME}"
-  echo 'PS1="\[\e[48;5;208m\e[97m\]sandbox\[\e[0m\] \[\e[1;32m\]\h:\w\[\e[0m\]$ "' >> "${SANDBOX_HOME}/.bashrc"
-
-
-  # Install electron globally via npm if not present
-  if ! check_command "electron"; then
-    echo "Instaling nvm..."
-    # install nvm
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
-
-    echo "Installing node via nvm..."
-    # install node
-    nvm install node
-
-    echo "Installing electron via npm..."
-    npm install -g electron
-    if ! check_command "electron"; then
-        echo "Failed to install electron. Please install it manually:"
-        echo "sudo npm install -g electron"
-        exit 1
-    fi
-    echo "Electron installed successfully"
-  fi
-fi
+# Determine sandbox name from the first argument or default to "clause-desktop"
+SANDBOX_NAME="${1:-clause-desktop}"
+SANDBOX_HOME="$HOME/sandboxes/${SANDBOX_NAME}"
 
 BWRAP_CMD=(
   bwrap
@@ -44,7 +16,6 @@ BWRAP_CMD=(
   --ro-bind /run/systemd /run/systemd
   --dev-bind /dev /dev
   --proc /proc
-  --bind "/run/user/$(id -u)/bus" "/run/user/$(id -u)/bus"
   --bind "${SANDBOX_HOME}" /home/agent
   --tmpfs /tmp
   --clearenv
@@ -56,7 +27,66 @@ BWRAP_CMD=(
   --setenv COLOTTERM "${COLORTERM}"
 )
 
+
+# Check if SANDBOX_HOME exists, if not create it and set ownership
+if [ ! -d "$SANDBOX_HOME" ]; then
+  mkdir -p "$SANDBOX_HOME"
+
+  cat > "${SANDBOX_HOME}/init.sh" <<EOF
+#!/bin/bash
+
+check_command() {
+    if ! command -v "\$1" &> /dev/null; then
+        echo "❌ \$1 not found"
+        return 1
+    else
+        echo "✓ \$1 found"
+        return 0
+    fi
+}
+
+if check_command "electron"; then
+  echo "Electron already installed"
+  exit 0
+fi
+# Install electron globally via npm if not present
+echo "Instaling nvm..."
+# install nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
+
+export NVM_DIR="\$HOME/.nvm"
+[ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"  # This loads nvm
+
+echo "Installing node via nvm..."
+# install node
+nvm install 22
+
+echo "Installing electron via npm..."
+npm install -g electron
+if ! check_command "electron"; then
+    echo "Failed to install electron. Please install it manually:"
+    echo "sudo npm install -g electron"
+    exit 1
+fi
+echo "Electron installed successfully"
+# npx playwright install
+
+echo "Installing uv/uvx..."
+curl -LsSf https://astral.sh/uv/install.sh | sh
+EOF
+  chmod +x "${SANDBOX_HOME}/init.sh"
+
+  # Initialize the sandbox
+  "${BWRAP_CMD[@]}" "./init.sh"
+
+  cp -a ~/.bashrc "${SANDBOX_HOME}"
+  echo 'PS1="\[\e[48;5;208m\e[97m\]sandbox\[\e[0m\] \[\e[1;32m\]\h:\w\[\e[0m\]$ "' >> "${SANDBOX_HOME}/.bashrc"
+
+  echo "Sandbox initialized successfully!"
+fi
+
 "${BWRAP_CMD[@]}" /bin/bash
 
 #  --ro-bind "${HOME}/.nvm/" /home/agent/.nvm/ \
 #  --ro-bind "${HOME}/.local/bin" /home/agent/.local/bin \
+# --bind "/run/user/$(id -u)/bus" "/run/user/$(id -u)/bus"
