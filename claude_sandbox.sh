@@ -32,29 +32,31 @@ if [ ! -d "$SANDBOX_HOME" ]; then
   fi
 fi
 
-BWRAP_CMD="bwrap \
-  --ro-bind /sbin /sbin \
-  --ro-bind /bin /bin \
-  --ro-bind /usr /usr \
-  --ro-bind /lib /lib \
-  --ro-bind /lib64 /lib64 \
-  --ro-bind /etc /etc \
-  --ro-bind /run/dbus /run/dbus \
-  --ro-bind /run/systemd /run/systemd \
-  --dev-bind /dev /dev \
-  --proc /proc \
-  --bind \"/run/user/$(id -u)/bus\" \"/run/user/$(id -u)/bus\" \
-  --bind \"${SANDBOX_HOME}\" /home/agent \
-  --tmpfs /tmp \
-  --clearenv \
-  --setenv HOME /home/agent \
-  --setenv PATH \"/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/home/agent/.local/bin\" \
-  --setenv DISPLAY \"${DISPLAY}\" \
-  --setenv DBUS_SESSION_BUS_ADDRESS \"${DBUS_SESSION_BUS_ADDRESS}\" \
-  --setenv TERM \"${TERM}\" \
-  --setenv COLOTTERM \"${COLORTERM}\""
+BWRAP_CMD=( 
+  bwrap
+  --ro-bind /sbin /sbin
+  --ro-bind /bin /bin
+  --ro-bind /usr /usr
+  --ro-bind /lib /lib
+  --ro-bind /lib64 /lib64
+  --ro-bind /etc /etc
+  --ro-bind /run/dbus /run/dbus
+  --ro-bind /run/systemd /run/systemd
+  --dev-bind /dev /dev
+  --proc /proc
+  --bind "/run/user/$(id -u)/bus" "/run/user/$(id -u)/bus"
+  --bind "${SANDBOX_HOME}" /home/agent
+  --tmpfs /tmp
+  --clearenv
+  --setenv HOME /home/agent
+  --setenv PATH "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/home/agent/.local/bin"
+  --setenv DISPLAY "${DISPLAY}"
+  --setenv DBUS_SESSION_BUS_ADDRESS "${DBUS_SESSION_BUS_ADDRESS}"
+  --setenv TERM "${TERM}"
+  --setenv COLOTTERM "${COLORTERM}"
+)
 
-$BWRAP_CMD /bin/bash
+"${BWRAP_CMD[@]}" /bin/bash
 
 #  --ro-bind "${HOME}/.nvm/" /home/agent/.nvm/ \
 #  --ro-bind "${HOME}/.local/bin" /home/agent/.local/bin \
