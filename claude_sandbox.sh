@@ -4,6 +4,9 @@
 SANDBOX_NAME="${1:-claude-desktop}"
 SANDBOX_HOME="$HOME/sandboxes/${SANDBOX_NAME}"
 
+# create fake passwd file
+grep "^$(whoami)" /etc/passwd | sed 's#[^\:]*:x:\([0-9\:]*\).*#agent:x:\1Agent:/home/agent:/bin/bash#' > "fake_passwd.${SANDBOX_NAME}"
+
 BWRAP_CMD=(
   bwrap
   --ro-bind /sbin /sbin
@@ -12,6 +15,7 @@ BWRAP_CMD=(
   --ro-bind /lib /lib
   --ro-bind /lib64 /lib64
   --ro-bind /etc /etc
+  --ro-bind "./fake_passwd.${SANDBOX_NAME}" /etc/passwd
   --ro-bind /run/dbus /run/dbus
   --ro-bind /run/systemd /run/systemd
   --dev-bind /dev /dev
@@ -26,7 +30,6 @@ BWRAP_CMD=(
   --setenv TERM "${TERM}"
   --setenv COLOTTERM "${COLORTERM}"
 )
-
 
 # Check if SANDBOX_HOME exists, if not create it and set ownership
 if [ ! -d "$SANDBOX_HOME" ]; then
@@ -73,6 +76,7 @@ echo "Electron installed successfully"
 
 echo "Installing uv/uvx..."
 curl -LsSf https://astral.sh/uv/install.sh | sh
+
 EOF
   chmod +x "${SANDBOX_HOME}/init.sh"
 
