@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Determine sandbox name from the first argument or default to "clause-desktop"
-SANDBOX_NAME="${1:-clause-desktop}"
+# Determine sandbox name from the first argument or default to "claude-desktop"
+SANDBOX_NAME="${1:-claude-desktop}"
 SANDBOX_HOME="$HOME/sandboxes/${SANDBOX_NAME}"
 
 BWRAP_CMD=(
