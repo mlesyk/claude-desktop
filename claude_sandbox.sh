@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if ! command -v bwrap &>/dev/null; then
+    echo "bwrap not found. Installing bubblewrap..."
+    sudo apt update && sudo apt install -y bubblewrap
+fi
+
 # Determine sandbox name from the first argument or default to "claude-desktop"
 SANDBOX_NAME="${1:-claude-desktop}"
 SANDBOX_HOME="$HOME/sandboxes/${SANDBOX_NAME}"
