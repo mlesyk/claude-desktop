@@ -7,7 +7,7 @@ SANDBOX_HOME=~/agent
 # Check if SANDBOX_HOME exists, if not create it and set ownership
 if [ ! -d "$SANDBOX_HOME" ]; then
   mkdir -p "$SANDBOX_HOME"
-  chown $(id -u):$(id -g) "$SANDBOX_HOME"
+  chown "$(id -u):$(id -g)" "$SANDBOX_HOME"
   cp -a ~/.bashrc "${SANDBOX_HOME}"
 
   echo 'PS1="\[\e[48;5;208m\e[97m\]sandbox\[\e[0m\] \[\e[1;32m\]\h:\w\[\e[0m\]$ "' >> "${SANDBOX_HOME}/.bashrc"
