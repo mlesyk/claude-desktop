@@ -23,6 +23,7 @@ BWRAP_CMD=(
   --ro-bind "./fake_passwd.${SANDBOX_NAME}" /etc/passwd
   --ro-bind /run/dbus /run/dbus
   --ro-bind /run/systemd /run/systemd
+  --bind "/run/user/$(id -u)/bus" "/run/user/$(id -u)/bus"
   --dev-bind /dev /dev
   --proc /proc
   --bind "${SANDBOX_HOME}" /home/agent
