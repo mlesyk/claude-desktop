@@ -23,16 +23,21 @@ BWRAP_CMD=(
   --ro-bind "./fake_passwd.${SANDBOX_NAME}" /etc/passwd
   --ro-bind /run/dbus /run/dbus
   --ro-bind /run/systemd /run/systemd
-  --bind "/run/user/$(id -u)/bus" "/run/user/$(id -u)/bus"
+  --bind "/run/user/${UID}/bus" "/run/user/${UID}/bus"
+  --bind "/run/user/${UID}/docker.pid" "/run/user/${UID}/docker.pid"
+  --bind "/run/user/${UID}/docker.sock" "/run/user/${UID}/docker.sock"
+  --bind "/run/user/${UID}/docker" "/run/user/${UID}/docker"
   --dev-bind /dev /dev
   --proc /proc
   --bind "${SANDBOX_HOME}" /home/agent
+  --ro-bind "${HOME}/.docker/contexts/meta/" /home/agent/.docker/contexts/meta/
   --tmpfs /tmp
   --clearenv
   --setenv HOME /home/agent
   --setenv PATH "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/home/agent/.local/bin"
   --setenv DISPLAY "${DISPLAY}"
   --setenv DBUS_SESSION_BUS_ADDRESS "${DBUS_SESSION_BUS_ADDRESS}"
+  --setenv XDG_RUNTIME_DIR "${XDG_RUNTIME_DIR}"
   --setenv TERM "${TERM}"
   --setenv COLOTTERM "${COLORTERM}"
 )
