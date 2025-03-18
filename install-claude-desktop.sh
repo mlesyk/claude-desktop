@@ -52,6 +52,9 @@ for cmd in p7zip wget wrestool icotool convert npx dpkg-deb; do
             "dpkg-deb")
                 DEPS_TO_INSTALL="$DEPS_TO_INSTALL dpkg-dev"
                 ;;
+            "bwrap")
+                DEPS_TO_INSTALL="$DEPS_TO_INSTALL bubblewrap"
+                ;;
         esac
     fi
 done
@@ -111,6 +114,19 @@ if ! wget -O "$CLAUDE_EXE" "$CLAUDE_DOWNLOAD_URL"; then
     exit 1
 fi
 echo "✓ Download complete"
+
+# Downloading sandbox script if it doesn't exist
+echo "📥 Checking for sandbox script..."
+SANDBOX_SCRIPT="$WORK_DIR/claude_sandbox.sh"
+if [ ! -f "$SANDBOX_SCRIPT" ]; then
+    echo "Downloading sandbox script..."
+    if ! wget -O "$SANDBOX_SCRIPT" "https://raw.githubusercontent.com/emsi/claude-desktop/refs/heads/main/claude_sandbox.sh"; then
+        echo "❌ Failed to download sandbox script"
+        exit 1
+    fi
+    echo "✓ Download complete"
+fi
+chmod +x "$SANDBOX_SCRIPT"
 
 # Extract resources
 echo "📦 Extracting resources..."
