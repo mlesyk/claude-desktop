@@ -102,7 +102,7 @@ mkdir -p "$INSTALL_DIR/share/icons"
 mkdir -p "$INSTALL_DIR/bin"
 
 # Install asar if needed
-if ! npm list -g asar > /dev/null 2>&1; then
+if ! command -v asar &> /dev/null; then
     echo "Installing asar package globally..."
     npm install -g asar
 fi
