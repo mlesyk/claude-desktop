@@ -39,6 +39,7 @@ conditional_mounts=(
   "--bind /run/user/${UID}/docker /run/user/${UID}/docker"
   "--dev-bind /dev /dev"
   "--ro-bind \"${HOME}/.docker/contexts/meta/\" /home/agent/.docker/contexts/meta/"
+  "--ro-bind /mnt/wsl /mnt/wsl"
 )
 
 # Conditionally append each mount if the source path exists
