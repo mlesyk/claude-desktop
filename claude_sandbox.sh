@@ -12,11 +12,10 @@ SANDBOX_HOME="$HOME/sandboxes/${SANDBOX_NAME}"
 # create fake passwd file
 grep "^$(whoami)" /etc/passwd | sed 's#[^\:]*:x:\([0-9\:]*\).*#agent:x:\1Agent:/home/agent:/bin/bash#' > "fake_passwd.${SANDBOX_NAME}"
 
-mkdir -p "${SANDBOX_HOME}"
-
 BWRAP_CMD=( 
   bwrap 
   --proc /proc
+  --bind "${SANDBOX_HOME}" /home/agent
 )
 
 # Data-driven listing of potential mounts (source and destination).
@@ -29,7 +28,7 @@ conditional_mounts=(
   "--ro-bind /lib /lib"
   "--ro-bind /lib64 /lib64"
   "--ro-bind /etc /etc"
-  "--ro-bind ./fake_passwd.${SANDBOX_NAME} /etc/passwd"
+  "--ro-bind \"./fake_passwd.${SANDBOX_NAME}\" /etc/passwd"
   "--ro-bind /run/dbus /run/dbus"
   "--ro-bind /run/systemd /run/systemd"
   "--ro-bind /snap /snap"
@@ -39,8 +38,7 @@ conditional_mounts=(
   "--bind /run/user/${UID}/docker.sock /run/user/${UID}/docker.sock"
   "--bind /run/user/${UID}/docker /run/user/${UID}/docker"
   "--dev-bind /dev /dev"
-  "--bind ${SANDBOX_HOME} /home/agent"
-  "--ro-bind ${HOME}/.docker/contexts/meta/ /home/agent/.docker/contexts/meta/"
+  "--ro-bind \"${HOME}/.docker/contexts/meta/\" /home/agent/.docker/contexts/meta/"
 )
 
 # Conditionally append each mount if the source path exists
