@@ -23,6 +23,8 @@ BWRAP_CMD=(
   --ro-bind "./fake_passwd.${SANDBOX_NAME}" /etc/passwd
   --ro-bind /run/dbus /run/dbus
   --ro-bind /run/systemd /run/systemd
+  # --ro-bind /snap /snap
+  # --ro-bind /sys /sys
   --bind "/run/user/${UID}/bus" "/run/user/${UID}/bus"
   --bind "/run/user/${UID}/docker.pid" "/run/user/${UID}/docker.pid"
   --bind "/run/user/${UID}/docker.sock" "/run/user/${UID}/docker.sock"
