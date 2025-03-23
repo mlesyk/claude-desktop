@@ -12,27 +12,49 @@ SANDBOX_HOME="$HOME/sandboxes/${SANDBOX_NAME}"
 # create fake passwd file
 grep "^$(whoami)" /etc/passwd | sed 's#[^\:]*:x:\([0-9\:]*\).*#agent:x:\1Agent:/home/agent:/bin/bash#' > "fake_passwd.${SANDBOX_NAME}"
 
-BWRAP_CMD=(
-  bwrap
-  --ro-bind /sbin /sbin
-  --ro-bind /bin /bin
-  --ro-bind /usr /usr
-  --ro-bind /lib /lib
-  --ro-bind /lib64 /lib64
-  --ro-bind /etc /etc
-  --ro-bind "./fake_passwd.${SANDBOX_NAME}" /etc/passwd
-  --ro-bind /run/dbus /run/dbus
-  --ro-bind /run/systemd /run/systemd
-  # --ro-bind /snap /snap
-  # --ro-bind /sys /sys
-  --bind "/run/user/${UID}/bus" "/run/user/${UID}/bus"
-  --bind "/run/user/${UID}/docker.pid" "/run/user/${UID}/docker.pid"
-  --bind "/run/user/${UID}/docker.sock" "/run/user/${UID}/docker.sock"
-  --bind "/run/user/${UID}/docker" "/run/user/${UID}/docker"
-  --dev-bind /dev /dev
+mkdir -p "${SANDBOX_HOME}"
+
+BWRAP_CMD=( 
+  bwrap 
   --proc /proc
-  --bind "${SANDBOX_HOME}" /home/agent
-  --ro-bind "${HOME}/.docker/contexts/meta/" /home/agent/.docker/contexts/meta/
+)
+
+# Data-driven listing of potential mounts (source and destination).
+# The first item in each line is the bwrap option (e.g. --ro-bind, --bind),
+# followed by the source path and then the target path.
+conditional_mounts=(
+  "--ro-bind /sbin /sbin"
+  "--ro-bind /bin /bin"
+  "--ro-bind /usr /usr"
+  "--ro-bind /lib /lib"
+  "--ro-bind /lib64 /lib64"
+  "--ro-bind /etc /etc"
+  "--ro-bind ./fake_passwd.${SANDBOX_NAME} /etc/passwd"
+  "--ro-bind /run/dbus /run/dbus"
+  "--ro-bind /run/systemd /run/systemd"
+  "--ro-bind /snap /snap"
+  "--ro-bind /sys /sys"
+  "--bind /run/user/${UID}/bus /run/user/${UID}/bus"
+  "--bind /run/user/${UID}/docker.pid /run/user/${UID}/docker.pid"
+  "--bind /run/user/${UID}/docker.sock /run/user/${UID}/docker.sock"
+  "--bind /run/user/${UID}/docker /run/user/${UID}/docker"
+  "--dev-bind /dev /dev"
+  "--bind ${SANDBOX_HOME} /home/agent"
+  "--ro-bind ${HOME}/.docker/contexts/meta/ /home/agent/.docker/contexts/meta/"
+)
+
+# Conditionally append each mount if the source path exists
+for mount_line in "${conditional_mounts[@]}"; do
+  # Split line into array:  [--ro-bind] [/sbin] [/sbin], etc.
+  read -r -a mount_args <<< "$mount_line"
+  # The source is typically the second element, mount_args[1]
+  if [[ -e "${mount_args[1]}" || "${mount_args[0]}" == "--proc" ]]; then
+    BWRAP_CMD+=("${mount_args[@]}")
+  fi
+done
+
+# Append always-included options (not path-dependent)
+BWRAP_CMD+=(
   --tmpfs /tmp
   --clearenv
   --setenv HOME /home/agent
@@ -41,8 +63,9 @@ BWRAP_CMD=(
   --setenv DBUS_SESSION_BUS_ADDRESS "${DBUS_SESSION_BUS_ADDRESS}"
   --setenv XDG_RUNTIME_DIR "${XDG_RUNTIME_DIR}"
   --setenv TERM "${TERM}"
-  --setenv COLOTTERM "${COLORTERM}"
+  --setenv COLORTERM "${COLORTERM}"
 )
+
 
 # Check if SANDBOX_HOME exists, if not create it and set ownership
 if [ ! -d "$SANDBOX_HOME" ]; then
