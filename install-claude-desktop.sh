@@ -63,7 +63,8 @@ done
 if [ -n "$DEPS_TO_INSTALL" ]; then
     echo "Installing system dependencies: $DEPS_TO_INSTALL"
     sudo apt update
-    sudo apt install -y "$DEPS_TO_INSTALL"
+    # shellcheck disable=SC2086
+    sudo apt install -y $DEPS_TO_INSTALL
     echo "System dependencies installed successfully"
 fi
 
