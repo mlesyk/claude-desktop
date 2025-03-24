@@ -78,7 +78,7 @@ fi
 # Install electron globally via npm if not present
 if ! check_command "electron"; then
     echo "Installing electron via npm..."
-    npm install -g electron
+    sudo npm install -g electron
     if ! check_command "electron"; then
         echo "Failed to install electron. Please install it manually:"
         echo "sudo npm install -g electron"
