@@ -8,12 +8,14 @@ If you run into an issue with this build script, make an issue here. Don't bug A
 To just build and install Claude Desktop on a Debian-based system, run the following command in your terminal:
 
 ```bash
-
 wget -O- https://raw.githubusercontent.com/emsi/claude-desktop/refs/heads/main/install-claude-desktop.sh | bash
 ```
 
-## Supports MCP
+# Supports MCP
 This app supports running MCP servers on Linux with some caveats. See the [MCP_LINUX.md](MCP_LINUX.md) file for more information.
+
+# Check [MyManus](https://github.com/emsi/MyManus)
+[MyManus](https://github.com/emsi/MyManus) is built around this project and offers incredible AI agent capabilities. Check it out!
 
 # Claude Desktop for Linux
 
