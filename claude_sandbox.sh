@@ -64,6 +64,7 @@ grep "^$(whoami)" /etc/passwd | sed 's#[^\:]*:x:\([0-9\:]*\).*#agent:x:\1Agent:/
 BWRAP_CMD=( 
   bwrap 
   --proc /proc
+  --tmpfs /tmp
   --bind "${SANDBOX_HOME}" /home/agent
 )
 
@@ -86,6 +87,7 @@ conditional_mounts=(
   "--bind /run/user/${UID}/docker.pid /run/user/${UID}/docker.pid"
   "--bind /run/user/${UID}/docker.sock /run/user/${UID}/docker.sock"
   "--bind /run/user/${UID}/docker /run/user/${UID}/docker"
+  "--bind /tmp/.X11-unix /tmp/.X11-unix"
   "--dev-bind /dev /dev"
   "--ro-bind \"${HOME}/.docker/contexts/meta/\" /home/agent/.docker/contexts/meta/"
   "--ro-bind /mnt/wsl /mnt/wsl"
@@ -103,11 +105,11 @@ done
 
 # Append always-included options (not path-dependent)
 BWRAP_CMD+=(
-  --tmpfs /tmp
   --clearenv
   --setenv HOME /home/agent
   --setenv PATH "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/home/agent/.local/bin"
   --setenv DISPLAY "${DISPLAY}"
+  --setenv WAYLAND_DISPLAY "$WAYLAND_DISPLAY"
   --setenv DBUS_SESSION_BUS_ADDRESS "${DBUS_SESSION_BUS_ADDRESS}"
   --setenv XDG_RUNTIME_DIR "${XDG_RUNTIME_DIR}"
   --setenv TERM "${TERM}"
@@ -133,35 +135,34 @@ check_command() {
     fi
 }
 
-if check_command "electron"; then
-  echo "Electron already installed"
-  exit 0
-fi
-# Install electron globally via npm if not present
-echo "Instaling nvm..."
-# install nvm
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
-
-export NVM_DIR="\$HOME/.nvm"
-[ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"  # This loads nvm
-
-echo "Installing node via nvm..."
-# install node
-nvm install 22
-
-echo "Installing electron via npm..."
-npm install -g electron
-if ! check_command "electron"; then
-    echo "Failed to install electron. Please install it manually:"
-    echo "sudo npm install -g electron"
-    exit 1
-fi
-echo "Electron installed successfully"
-# npx playwright install
-
 echo "Installing uv/uvx..."
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
+if check_command "electron"; then
+  echo "Electron already installed"
+else
+  # Install electron globally via npm if not present
+  echo "Instaling nvm..."
+  # install nvm
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
+  
+  export NVM_DIR="\$HOME/.nvm"
+  [ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"  # This loads nvm
+  
+  echo "Installing node via nvm..."
+  # install node
+  nvm install 22
+  
+  echo "Installing electron via npm..."
+  npm install -g electron
+  if ! check_command "electron"; then
+      echo "Failed to install electron. Please install it manually:"
+      echo "sudo npm install -g electron"
+      exit 1
+  fi
+  echo "Electron installed successfully"
+fi
+# npx playwright install
 EOF
   chmod +x "${SANDBOX_HOME}/init.sh"
 
