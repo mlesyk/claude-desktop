@@ -111,7 +111,7 @@ mkdir -p "$INSTALL_DIR/bin"
 # Install asar if needed
 if ! command -v asar &> /dev/null; then
     echo "Installing asar package globally..."
-    npm install -g asar
+    sudo npm install -g asar
 fi
 
 # Download Claude Windows installer
