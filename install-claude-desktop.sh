@@ -15,6 +15,13 @@ echo "System Information:"
 echo "Distribution: $(grep "PRETTY_NAME" /etc/os-release | cut -d'"' -f2)"
 echo "Debian version: $(cat /etc/debian_version)"
 
+if [[ -n "$WSL_DISTRO_NAME" ]]; then
+    echo "Running in WSL!"
+    # remove Windows paths from PATH
+    PATH=$(echo "$PATH" | sed 's|:/mnt/c[^:]*||g' | sed 's|^/mnt/c[^:]*:||')
+    export PATH
+fi
+
 # Function to check if a command exists
 check_command() {
     if ! command -v "$1" &> /dev/null; then
