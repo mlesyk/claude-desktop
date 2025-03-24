@@ -35,7 +35,15 @@ check_command() {
 
 # Check and install dependencies
 echo "Checking dependencies..."
-DEPS_TO_INSTALL=""
+DEPS_TO_INSTALL="libnss3"
+if apt-cache show libasound2t64 >/dev/null 2>&1; then
+    DEPS_TO_INSTALL="$DEPS_TO_INSTALL libasound2t64"
+else
+    echo "libasound2t64 not found. Installing libasound2..."
+    DEPS_TO_INSTALL="$DEPS_TO_INSTALL libasound2"
+fi
+
+DEPS_TO_INSTALL="libnss3 libasound2t64"
 
 # Check system package dependencies
 for cmd in p7zip wget wrestool icotool convert npx dpkg-deb; do
