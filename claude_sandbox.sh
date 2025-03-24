@@ -135,6 +135,10 @@ check_command() {
     fi
 }
 
+mkdir -p ~/Documents/CODE
+mkdir -p ~/Documents/NOTES
+mkdir -p ~/Downloads
+
 echo "Installing uv/uvx..."
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
