@@ -34,16 +34,20 @@ check_command() {
 }
 
 # Check and install dependencies
+DEPS_TO_INSTALL=""
 echo "Checking dependencies..."
-DEPS_TO_INSTALL="libnss3"
+dpkg -s "libnss3" >/dev/null 2>&1 || DEPS_TO_INSTALL="$DEPS_TO_INSTALL libnss3"
+
+# Check availability of libasound2t64 and set package accordingly
 if apt-cache show libasound2t64 >/dev/null 2>&1; then
-    DEPS_TO_INSTALL="$DEPS_TO_INSTALL libasound2t64"
+    PKG="libasound2t64"
 else
-    echo "libasound2t64 not found. Installing libasound2..."
-    DEPS_TO_INSTALL="$DEPS_TO_INSTALL libasound2"
+    echo "libasound2t64 not found. Falling back to libasound2..."
+    PKG="libasound2"
 fi
 
-DEPS_TO_INSTALL="libnss3 libasound2t64"
+# Add package if not already installed
+dpkg -s "$PKG" >/dev/null 2>&1 || DEPS_TO_INSTALL="$DEPS_TO_INSTALL $PKG"
 
 # Check system package dependencies
 for cmd in p7zip wget wrestool icotool convert npx dpkg-deb; do
@@ -133,7 +137,8 @@ echo "✓ Download complete"
 
 # Downloading sandbox script if it doesn't exist
 echo "📥 Checking for sandbox script..."
-SANDBOX_SCRIPT="$WORK_DIR/claude_sandbox.sh"
+mkdir -p "$HOME/sandboxes/"
+SANDBOX_SCRIPT="$HOME/sandboxes/claude_sandbox.sh"
 if [ ! -f "$SANDBOX_SCRIPT" ]; then
     echo "Downloading sandbox script..."
     if ! wget -O "$SANDBOX_SCRIPT" "https://raw.githubusercontent.com/emsi/claude-desktop/refs/heads/main/claude_sandbox.sh"; then
