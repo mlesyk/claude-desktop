@@ -25,7 +25,8 @@ EOF
 }
 
 # Handle help and invalid options
-while [ $# -gt 0 ]; do
+SANDBOX_NAME=""
+while [ "$#" -gt 0 ]; do
     case "$1" in
         -h|--help)
             usage
@@ -39,20 +40,23 @@ while [ $# -gt 0 ]; do
             usage
             ;;
         *)
-            break
+            if [ -z "$SANDBOX_NAME" ]; then
+                SANDBOX_NAME="$1"
+            else
+                break
+            fi
             ;;
     esac
     shift
 done
 
+SANDBOX_NAME="${SANDBOX_NAME:-claude-desktop}"
+SANDBOX_HOME="$HOME/sandboxes/${SANDBOX_NAME}"
+
 if ! command -v bwrap &>/dev/null; then
     echo "bwrap not found. Installing bubblewrap..."
     sudo apt update && sudo apt install -y bubblewrap
 fi
-
-# Determine sandbox name from the first argument or default to "claude-desktop"
-SANDBOX_NAME="${1:-claude-desktop}" && shift
-SANDBOX_HOME="$HOME/sandboxes/${SANDBOX_NAME}"
 
 # create fake passwd file
 grep "^$(whoami)" /etc/passwd | sed 's#[^\:]*:x:\([0-9\:]*\).*#agent:x:\1Agent:/home/agent:/bin/bash#' > "$HOME/sandboxes/fake_passwd.${SANDBOX_NAME}"
