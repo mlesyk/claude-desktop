@@ -112,6 +112,7 @@ BWRAP_CMD+=(
   --setenv XDG_RUNTIME_DIR "${XDG_RUNTIME_DIR}"
   --setenv TERM "${TERM}"
   --setenv COLORTERM "${COLORTERM}"
+  --setenv BASH_ENV "${HOME}/.bashrc"
 )
 
 
