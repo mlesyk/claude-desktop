@@ -1,4 +1,49 @@
 #!/bin/bash
+set -e 
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [OPTIONS] [SANDBOX_NAME] [COMMAND]
+
+Create and run commands in an isolated sandbox environment using bubblewrap.
+
+Arguments:
+    SANDBOX_NAME    Name of the sandbox (default: claude-desktop)
+    COMMAND         Command to run in sandbox (default: /bin/bash)
+
+Options:
+    -h, --help     Show this help message and exit
+
+Examples:
+    $(basename "$0")                   # Start default sandbox with bash shell
+    $(basename "$0") my-sandbox        # Start custom sandbox with bash shell
+    $(basename "$0") my-sandbox ls -l  # Run 'ls -l' in custom sandbox
+
+The sandbox will be created in \$HOME/sandboxes/SANDBOX_NAME if it doesn't exist.
+EOF
+    exit 1
+}
+
+# Handle help and invalid options
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h|--help)
+            usage
+            ;;
+        --*)
+            echo "Error: Unknown option $1"
+            usage
+            ;;
+        -*)
+            echo "Error: Unknown option $1"
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
 
 if ! command -v bwrap &>/dev/null; then
     echo "bwrap not found. Installing bubblewrap..."
@@ -6,11 +51,11 @@ if ! command -v bwrap &>/dev/null; then
 fi
 
 # Determine sandbox name from the first argument or default to "claude-desktop"
-SANDBOX_NAME="${1:-claude-desktop}"
+SANDBOX_NAME="${1:-claude-desktop}" && shift
 SANDBOX_HOME="$HOME/sandboxes/${SANDBOX_NAME}"
 
 # create fake passwd file
-grep "^$(whoami)" /etc/passwd | sed 's#[^\:]*:x:\([0-9\:]*\).*#agent:x:\1Agent:/home/agent:/bin/bash#' > "fake_passwd.${SANDBOX_NAME}"
+grep "^$(whoami)" /etc/passwd | sed 's#[^\:]*:x:\([0-9\:]*\).*#agent:x:\1Agent:/home/agent:/bin/bash#' > "$HOME/sandboxes/fake_passwd.${SANDBOX_NAME}"
 
 BWRAP_CMD=( 
   bwrap 
@@ -28,7 +73,7 @@ conditional_mounts=(
   "--ro-bind /lib /lib"
   "--ro-bind /lib64 /lib64"
   "--ro-bind /etc /etc"
-  "--ro-bind \"./fake_passwd.${SANDBOX_NAME}\" /etc/passwd"
+  "--ro-bind \"$HOME/sandboxes/fake_passwd.${SANDBOX_NAME}\" /etc/passwd"
   "--ro-bind /run/dbus /run/dbus"
   "--ro-bind /run/systemd /run/systemd"
   "--ro-bind /snap /snap"
@@ -124,8 +169,8 @@ EOF
   echo "Sandbox initialized successfully!"
 fi
 
-"${BWRAP_CMD[@]}" /bin/bash
-
-#  --ro-bind "${HOME}/.nvm/" /home/agent/.nvm/ \
-#  --ro-bind "${HOME}/.local/bin" /home/agent/.local/bin \
-# --bind "/run/user/$(id -u)/bus" "/run/user/$(id -u)/bus"
+if [ "$#" -gt 0 ]; then
+  "${BWRAP_CMD[@]}" "$@"
+else
+  "${BWRAP_CMD[@]}" /bin/bash
+fi
