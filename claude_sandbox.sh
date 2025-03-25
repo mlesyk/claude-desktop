@@ -166,7 +166,7 @@ else
   fi
   echo "Electron installed successfully"
 fi
-# npx playwright install
+npx playwright install
 EOF
   chmod +x "${SANDBOX_HOME}/init.sh"
 
@@ -174,7 +174,7 @@ EOF
   "${BWRAP_CMD[@]}" "./init.sh"
 
   cp -a ~/.bashrc "${SANDBOX_HOME}"
-  echo 'PS1="\[\e[48;5;208m\e[97m\]sandbox\[\e[0m\] \[\e[1;32m\]\h:\w\[\e[0m\]$ "' >> "${SANDBOX_HOME}/.bashrc"
+  echo 'PS1="\[\e[48;5;208m\e[97m\]sandbox '"${SANDBOX_NAME}"'\[\e[0m\] \[\e[1;32m\]\h:\w\[\e[0m\]$ "' >> "${SANDBOX_HOME}/.bashrc"
 
   echo "Sandbox initialized successfully!"
 fi
