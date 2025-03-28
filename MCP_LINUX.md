@@ -1,10 +1,10 @@
 # SPECIAL INSTRUCTIONS FOR RUNNING MCP ON LINUX
 
-To add a layeer of protection run the claude-desktop sandboxed using the command:
+To add a layer of protection, run the claude-desktop sandboxed using the command:
 ```claude_sandbox.sh```
 
 It uses `bwrap` (also used by flatpack) to sandbox the application.
-When run without arguments it creates the default sandbox `~/sandboxes/claude-desktop` and installs all the necessary tools in it. 
+When run without arguments, it creates the default sandbox `~/sandboxes/claude-desktop` and installs all the necessary tools in it. 
 
 First run might take some time. Subsequent runs are faster.
 
@@ -41,7 +41,7 @@ For example to run the Playwright MCP server, you would add the following config
 
 # Creating a custom MCP server
 
-To creating custom MCP tollow these steps:
+To create custom MCP follow these steps:
 
 ```bash
 mkdir my-mcp-server
@@ -58,14 +58,14 @@ uv add "./mcp-python-sdk-linux[cli]"
 uv run mcp install server.py
 ```
 
-This will add the custom server to the claude-desktop app and you can now interact with it fromt he Claude Desktop app.
+This will add the custom server to the claude-desktop app and you can now interact with it from the Claude Desktop app.
 
 
 # Auto accepting tools
 
 *Based on the : https://www.reddit.com/r/ClaudeAI/comments/1h9harx/auto_approve_mcp_tool_calls/*
 
-To automatically accept all or selected tools follow this steps:
+To automatically accept all or selected tools follow these steps:
 
 1. Enable debug tools:
 ```echo '{"allowDevTools": true}' > ~/.config/Claude/developer_settings.json```
