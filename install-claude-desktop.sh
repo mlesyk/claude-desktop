@@ -257,6 +257,11 @@ mkdir -p app.asar.contents/resources/i18n
 cp ../lib/net45/resources/Tray* app.asar.contents/resources/
 cp ../lib/net45/resources/*-*.json app.asar.contents/resources/i18n/
 
+echo "Downloading Main Window Fix Assets"
+cd app.asar.contents
+wget -O- https://github.com/emsi/claude-desktop/raw/refs/heads/main/assets/main_window.tgz | tar -zxvf -
+cd ..
+
 # Repackage app.asar
 npx asar pack app.asar.contents app.asar
 
