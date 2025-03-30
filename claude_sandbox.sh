@@ -81,6 +81,7 @@ conditional_mounts=(
   "--ro-bind \"$HOME/sandboxes/fake_passwd.${SANDBOX_NAME}\" /etc/passwd"
   "--ro-bind /run/dbus /run/dbus"
   "--ro-bind /run/systemd /run/systemd"
+  "--ro-bind /run/resolvconf /run/resolvconf"
   "--ro-bind /snap /snap"
   "--ro-bind /sys /sys"
   "--bind /run/user/${UID}/bus /run/user/${UID}/bus"
