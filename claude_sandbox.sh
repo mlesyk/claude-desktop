@@ -61,13 +61,6 @@ fi
 # create fake passwd file
 grep "^$(whoami)" /etc/passwd | sed 's#[^\:]*:x:\([0-9\:]*\).*#agent:x:\1Agent:/home/agent:/bin/bash#' > "$HOME/sandboxes/fake_passwd.${SANDBOX_NAME}"
 
-# find where is resolv.conf
-echo "Checking /etc/resolv.conf..."
-if [ -L /etc/resolv.conf ]; then
-    RESOLV_CONF=$(readlink -f /etc/resolv.conf)
-fi
-RESOLV_CONF="${RESOLV_CONF:-/etc/resolv.conf}"
-
 BWRAP_CMD=( 
   bwrap 
   --proc /proc
@@ -88,6 +81,7 @@ conditional_mounts=(
   "--ro-bind \"$HOME/sandboxes/fake_passwd.${SANDBOX_NAME}\" /etc/passwd"
   "--ro-bind /run/dbus /run/dbus"
   "--ro-bind /run/systemd /run/systemd"
+  "--ro-bind /run/resolvconf /run/resolvconf"
   "--ro-bind /snap /snap"
   "--ro-bind /sys /sys"
   "--bind /run/user/${UID}/bus /run/user/${UID}/bus"
@@ -112,7 +106,6 @@ done
 
 # Append always-included options (not path-dependent)
 BWRAP_CMD+=(
-  --ro-bind "${RESOLV_CONF}" /etc/resolv.conf
   --clearenv
   --setenv HOME /home/agent
   --setenv PATH "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/home/agent/.local/bin"
