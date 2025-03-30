@@ -66,7 +66,7 @@ echo "Checking /etc/resolv.conf..."
 if [ -L /etc/resolv.conf ]; then
     RESOLV_CONF=$(readlink -f /etc/resolv.conf)
 fi
-RESOLV_CONF="${RESOLV_CONF:/etc/resolv.conf}"
+RESOLV_CONF="${RESOLV_CONF:-/etc/resolv.conf}"
 
 BWRAP_CMD=( 
   bwrap 
