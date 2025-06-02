@@ -178,6 +178,11 @@ conditional_mounts=(
   "--bind /run/user/${UID}/docker.sock /run/user/${UID}/docker.sock"
   "--bind /run/user/${UID}/docker /run/user/${UID}/docker"
   "--bind /tmp/.X11-unix /tmp/.X11-unix"
+  "--bind /run/user/${UID}/wayland-0 /run/user/${UID}/wayland-0"
+  "--bind /run/user/${UID}/wayland-1 /run/user/${UID}/wayland-1"
+  "--ro-bind /etc/machine-id /etc/machine-id"
+  "--ro-bind /var/lib/dbus/machine-id /var/lib/dbus/machine-id"
+  "--ro-bind \"${HOME}/.Xauthority\" /home/agent/.Xauthority"
   "--dev-bind /dev /dev"
   "--ro-bind \"${HOME}/.docker/contexts/meta/\" /home/agent/.docker/contexts/meta/"
   "--ro-bind /mnt/wsl /mnt/wsl"
@@ -194,17 +199,34 @@ for mount_line in "${conditional_mounts[@]}"; do
 done
 
 # Append always-included options (not path-dependent)
+# Detect session type if not set
+if [ -z "$XDG_SESSION_TYPE" ]; then
+  if [ -n "$WAYLAND_DISPLAY" ]; then
+    SESSION_TYPE="wayland"
+  elif [ -n "$DISPLAY" ]; then
+    SESSION_TYPE="x11"
+  else
+    SESSION_TYPE="x11"  # fallback
+  fi
+else
+  SESSION_TYPE="$XDG_SESSION_TYPE"
+fi
+
 BWRAP_CMD+=(
   --clearenv
   --setenv HOME /home/agent
   --setenv PATH "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/home/agent/.local/bin"
-  --setenv DISPLAY "${DISPLAY}"
-  --setenv WAYLAND_DISPLAY "$WAYLAND_DISPLAY"
+  --setenv DISPLAY "${DISPLAY:-:0}"
+  --setenv WAYLAND_DISPLAY "${WAYLAND_DISPLAY}"
   --setenv DBUS_SESSION_BUS_ADDRESS "${DBUS_SESSION_BUS_ADDRESS}"
-  --setenv XDG_RUNTIME_DIR "${XDG_RUNTIME_DIR}"
+  --setenv XDG_RUNTIME_DIR "/run/user/${UID}"
+  --setenv XDG_SESSION_TYPE "${SESSION_TYPE}"
+  --setenv XDG_CURRENT_DESKTOP "${XDG_CURRENT_DESKTOP}"  
   --setenv TERM "${TERM}"
   --setenv COLORTERM "${COLORTERM}"
   --setenv BASH_ENV "/home/agent/.bashrc"
+  --setenv XAUTHORITY "/home/agent/.Xauthority"
+  --setenv ELECTRON_OZONE_PLATFORM_HINT "${SESSION_TYPE}"
 )
 
 
