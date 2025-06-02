@@ -2,13 +2,33 @@
 
 If you run into an issue with this build script, make an issue here. Don't bug Anthropic about it - they already have enough on their plates.
 
-*This repo is the fork of https://github.com/aaddrick/claude-desktop-debian*
+*This repo is the fork of https://github.com/emsi/claude-desktop
+which is fork of https://github.com/aaddrick/claude-desktop-debian*
+
+## What was done in This Fork
+
+This fork fixes **Ubuntu 24.04+ compatibility issues** and adds **flexible launch options** missing from the original implementation.
+
+### Key Improvements
+
+- **Ubuntu 24.04+ Launch Fixes**: Resolves AppArmor restrictions and Electron sandbox configuration issues that prevent Claude Desktop from starting on modern Ubuntu systems
+- **Sandbox Launch Options**: Interactive dialog to choose between sandboxed (secure isolation) or direct (system access) execution modes
+- **Multi-Sandbox Support**: Create and manage multiple isolated sandbox environments for different projects or security contexts
+
+### What's Fixed
+
+The original implementation failed to launch on Ubuntu 24.04+ due to:
+- AppArmor blocking user namespace creation for bubblewrap
+- Misconfigured Electron chrome-sandbox SUID permissions
+- X11 authentication failures in sandboxed environments
+
+This fork automatically detects and applies the necessary fixes during installation, while adding a user-friendly launcher for choosing between secure sandboxed or direct system execution.
 
 # TLDR
 To just build and install Claude Desktop on a Debian-based system, run the following command in your terminal:
 
 ```bash
-wget -O- https://raw.githubusercontent.com/emsi/claude-desktop/refs/heads/main/install-claude-desktop.sh | bash
+wget -O- https://raw.githubusercontent.com/mlesyk/claude-desktop/refs/heads/main/install-claude-desktop.sh | bash
 ```
 
 # Supports MCP
@@ -37,7 +57,7 @@ For Debian-based distributions (Debian, Ubuntu, Linux Mint, MX Linux, etc.), you
 
 ```bash
 # Clone this repository
-git clone https://github.com/emsi/claude-desktop
+git clone https://github.com/mlesyk/claude-desktop
 cd claude-desktop
 
 # Build and install the package

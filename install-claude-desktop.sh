@@ -165,7 +165,7 @@ mkdir -p "$HOME/sandboxes/"
 SANDBOX_SCRIPT="$HOME/sandboxes/claude_sandbox.sh"
 if [ ! -f "$SANDBOX_SCRIPT" ]; then
     echo "Downloading sandbox script..."
-    if ! wget -O "$SANDBOX_SCRIPT" "https://raw.githubusercontent.com/emsi/claude-desktop/refs/heads/main/claude_sandbox.sh"; then
+    if ! wget -O "$SANDBOX_SCRIPT" "https://raw.githubusercontent.com/mlesyk/claude-desktop/refs/heads/main/claude_sandbox.sh"; then
         echo "❌ Failed to download sandbox script"
         exit 1
     fi
@@ -283,7 +283,7 @@ cp ../lib/net45/resources/*-*.json app.asar.contents/resources/i18n/
 
 echo "Downloading Main Window Fix Assets"
 cd app.asar.contents
-wget -O- https://github.com/emsi/claude-desktop/raw/refs/heads/main/assets/main_window.tgz | tar -zxvf -
+wget -O- https://github.com/mlesyk/claude-desktop/raw/refs/heads/main/assets/main_window.tgz | tar -zxvf -
 cd ..
 
 # Repackage app.asar
