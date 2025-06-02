@@ -99,6 +99,30 @@ if ! check_command "electron"; then
     echo "Electron installed successfully"
 fi
 
+# Fix Electron sandbox permissions for Ubuntu 24.04+
+if [ -f "/usr/local/lib/node_modules/electron/dist/chrome-sandbox" ]; then
+    echo "Configuring Electron sandbox permissions..."
+    sudo chown root:root /usr/local/lib/node_modules/electron/dist/chrome-sandbox
+    sudo chmod 4755 /usr/local/lib/node_modules/electron/dist/chrome-sandbox
+    echo "✓ Electron sandbox permissions configured"
+fi
+
+# Create AppArmor profile for Electron (Ubuntu 24.04+ fix)
+if grep -q "24.04" /etc/os-release 2>/dev/null || grep -q "noble" /etc/os-release 2>/dev/null; then
+    echo "Creating AppArmor profile for Electron (Ubuntu 24.04)..."
+    sudo tee /etc/apparmor.d/electron << 'EOF' >/dev/null
+abi <abi/4.0>,
+include <tunables/global>
+
+profile electron /usr/local/lib/node_modules/electron/dist/electron flags=(unconfined) {
+  userns,
+  include if exists <local/electron>
+}
+EOF
+    sudo systemctl reload apparmor
+    echo "✓ AppArmor profile for Electron created and loaded"
+fi
+
 # Extract version from the installer filename
 VERSION=$(basename "$CLAUDE_DOWNLOAD_URL" | grep -oP 'Claude-Setup-x64\.exe' | sed 's/Claude-Setup-x64\.exe/0.9.3/')
 PACKAGE_NAME="claude-desktop"
