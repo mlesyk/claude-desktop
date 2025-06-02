@@ -337,11 +337,141 @@ EOF
 cp app.asar "$INSTALL_DIR/lib/$PACKAGE_NAME/"
 cp -r app.asar.unpacked "$INSTALL_DIR/lib/$PACKAGE_NAME/"
 
+# Create wrapper script
+cat > "$INSTALL_DIR/bin/claude-desktop-launcher" << 'EOF'
+#!/bin/bash
+
+# Debug logging
+exec 2>> /tmp/claude-launcher-debug.log
+echo "$(date): Enhanced launcher started with args: $@" >> /tmp/claude-launcher-debug.log
+
+# Function to get list of existing sandboxes
+get_existing_sandboxes() {
+    local sandboxes=()
+    if [ -d "$HOME/sandboxes" ]; then
+        # Find directories in sandboxes folder, exclude the script files
+        while IFS= read -r -d '' dir; do
+            local basename=$(basename "$dir")
+            # Skip files and hidden directories
+            if [ -d "$dir" ] && [[ ! "$basename" =~ ^\. ]] && [[ ! "$basename" =~ \.sh$ ]]; then
+                sandboxes+=("$basename")
+            fi
+        done < <(find "$HOME/sandboxes" -maxdepth 1 -type d -print0)
+    fi
+
+    # Remove the parent directory from the list
+    local filtered_sandboxes=()
+    for sandbox in "${sandboxes[@]}"; do
+        if [[ "$sandbox" != "sandboxes" ]]; then
+            filtered_sandboxes+=("$sandbox")
+        fi
+    done
+
+    printf '%s\n' "${filtered_sandboxes[@]}"
+}
+
+# Function to show unified execution dialog
+show_execution_dialog() {
+    local existing_sandboxes=($(get_existing_sandboxes))
+    local dialog_options=()
+
+    # Add direct execution option
+    dialog_options+=(FALSE "Direct" "Run with direct system access")
+
+    # Add option to create new sandbox
+    dialog_options+=(FALSE "NEW_SANDBOX" "Create new sandbox")
+
+    # Add existing sandboxes
+    local first_sandbox=TRUE
+    for sandbox in "${existing_sandboxes[@]}"; do
+        dialog_options+=($first_sandbox "$sandbox" "Existing sandbox: $sandbox")
+        first_sandbox=FALSE
+    done
+
+    # If no existing sandboxes, make "create new" the default
+    if [ ${#existing_sandboxes[@]} -eq 0 ]; then
+        # Find the NEW_SANDBOX option and make it default
+        for i in "${!dialog_options[@]}"; do
+            if [ "${dialog_options[$i]}" = "NEW_SANDBOX" ]; then
+                dialog_options[$((i-1))]=TRUE
+                break
+            fi
+        done
+    fi
+
+    zenity --list --radiolist \
+        --title="Claude Desktop Launcher" \
+        --text="Choose execution mode:" \
+        --column="Select" --column="Mode" --column="Description" \
+        "${dialog_options[@]}" \
+        --width=600 --height=450 2>/dev/null
+}
+
+# Function to prompt for new sandbox name
+prompt_sandbox_name() {
+    zenity --entry \
+        --title="New Sandbox Name" \
+        --text="Enter name for the new sandbox:" \
+        --entry-text="claude-$(date +%Y%m%d-%H%M%S)" \
+        --width=400 2>/dev/null
+}
+
+# Main execution
+if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
+    echo "$(date): GUI environment detected" >> /tmp/claude-launcher-debug.log
+
+    # Single dialog: Choose execution mode (including all sandbox options)
+    selected_option=$(show_execution_dialog)
+    echo "$(date): Selected option: '$selected_option'" >> /tmp/claude-launcher-debug.log
+
+    if [ -z "$selected_option" ]; then
+        echo "$(date): No option selected, exiting" >> /tmp/claude-launcher-debug.log
+        exit 1
+    fi
+
+    case "$selected_option" in
+        "Direct")
+            echo "$(date): Launching direct version" >> /tmp/claude-launcher-debug.log
+            exec claude-desktop "$@"
+            ;;
+        "NEW_SANDBOX")
+            # Prompt for new sandbox name
+            new_sandbox_name=$(prompt_sandbox_name)
+            echo "$(date): New sandbox name: '$new_sandbox_name'" >> /tmp/claude-launcher-debug.log
+
+            if [ -z "$new_sandbox_name" ]; then
+                echo "$(date): No sandbox name provided, exiting" >> /tmp/claude-launcher-debug.log
+                exit 1
+            fi
+
+            # Validate sandbox name (alphanumeric, hyphens, underscores only)
+            if [[ ! "$new_sandbox_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+                zenity --error --text="Invalid sandbox name. Use only letters, numbers, hyphens, and underscores." 2>/dev/null
+                echo "$(date): Invalid sandbox name: '$new_sandbox_name'" >> /tmp/claude-launcher-debug.log
+                exit 1
+            fi
+
+            echo "$(date): Launching new sandbox: '$new_sandbox_name'" >> /tmp/claude-launcher-debug.log
+            exec $HOME/sandboxes/claude_sandbox.sh "$new_sandbox_name" claude-desktop "$@"
+            ;;
+        *)
+            # Selected option is an existing sandbox name
+            echo "$(date): Launching existing sandbox: '$selected_option'" >> /tmp/claude-launcher-debug.log
+            exec $HOME/sandboxes/claude_sandbox.sh "$selected_option" claude-desktop "$@"
+            ;;
+    esac
+else
+    echo "$(date): No GUI environment detected, using default sandboxed mode" >> /tmp/claude-launcher-debug.log
+    exec $HOME/sandboxes/claude_sandbox.sh claude-desktop claude-desktop "$@"
+fi
+EOF
+chmod +x "$INSTALL_DIR/bin/claude-desktop-launcher"
+
 # Create desktop entry
 cat > "$INSTALL_DIR/share/applications/claude-desktop.desktop" << EOF
 [Desktop Entry]
 Name=Claude
-Exec=claude-desktop %u
+Exec=claude-desktop-launcher %u
 Icon=claude-desktop
 Type=Application
 Terminal=false
