@@ -109,8 +109,10 @@ fi
 
 # Create AppArmor profile for Electron (Ubuntu 24.04+ fix)
 if grep -q "24.04" /etc/os-release 2>/dev/null || grep -q "noble" /etc/os-release 2>/dev/null; then
-    echo "Creating AppArmor profile for Electron (Ubuntu 24.04)..."
-    sudo tee /etc/apparmor.d/electron << 'EOF' >/dev/null
+    # Check if AppArmor is actually enabled and active
+    if systemctl is-active --quiet apparmor 2>/dev/null && [ -d "/etc/apparmor.d" ]; then
+        echo "Creating AppArmor profile for Electron (Ubuntu 24.04)..."
+        sudo tee /etc/apparmor.d/electron << 'EOF' >/dev/null
 abi <abi/4.0>,
 include <tunables/global>
 
@@ -119,8 +121,12 @@ profile electron /usr/local/lib/node_modules/electron/dist/electron flags=(uncon
   include if exists <local/electron>
 }
 EOF
-    sudo systemctl reload apparmor
-    echo "✓ AppArmor profile for Electron created and loaded"
+        sudo systemctl reload apparmor
+        echo "✓ AppArmor profile for Electron created and loaded"
+    else
+        echo "ℹ️  AppArmor not active on this system - skipping profile creation"
+        echo "✓ Electron should work with SUID sandbox configuration"
+    fi
 fi
 
 # Extract version from the installer filename
