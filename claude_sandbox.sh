@@ -58,6 +58,95 @@ if ! command -v bwrap &>/dev/null; then
     sudo apt update && sudo apt install -y bubblewrap
 fi
 
+# Function to check and fix bubblewrap permissions
+fix_bwrap_permissions() {
+    echo "Checking bubblewrap permissions..."
+    
+    # Test if bubblewrap works with a simple command
+    if ! bwrap --ro-bind / / --tmpfs /tmp --unshare-all --die-with-parent /bin/echo "test" &>/dev/null; then
+        echo "Bubblewrap permission issue detected. Attempting fixes..."
+        
+        # Ubuntu 24.04+ specific: Check for AppArmor restrictions
+        if grep -q "24.04" /etc/os-release 2>/dev/null || grep -q "noble" /etc/os-release 2>/dev/null; then
+            echo "Detected Ubuntu 24.04+ - checking AppArmor restrictions..."
+            if ! [ -f /etc/apparmor.d/bwrap ]; then
+                echo "Creating AppArmor profile for bubblewrap (Ubuntu 24.04+ fix)..."
+                sudo tee /etc/apparmor.d/bwrap << 'EOF' >/dev/null
+abi <abi/4.0>,
+include <tunables/global>
+
+profile bwrap /usr/bin/bwrap flags=(unconfined) {
+  userns,
+
+  # Site-specific additions and overrides. See local/README for details.
+  include if exists <local/bwrap>
+}
+EOF
+                echo "Reloading AppArmor..."
+                sudo systemctl reload apparmor
+                sleep 2
+                # Test again
+                if bwrap --ro-bind / / --tmpfs /tmp --unshare-all --die-with-parent /bin/echo "test" &>/dev/null; then
+                    echo "✅ Bubblewrap now working with AppArmor profile!"
+                    return 0
+                fi
+            fi
+        fi
+
+	# Method 1: Try enabling user namespaces
+        if [ -f /proc/sys/kernel/unprivileged_userns_clone ]; then
+            current_userns=$(cat /proc/sys/kernel/unprivileged_userns_clone 2>/dev/null || echo "0")
+            if [ "$current_userns" = "0" ]; then
+                echo "Attempting to enable user namespaces..."
+                if echo 1 | sudo tee /proc/sys/kernel/unprivileged_userns_clone >/dev/null 2>&1; then
+                    echo "User namespaces enabled temporarily."
+                    # Test again
+                    if bwrap --ro-bind / / --tmpfs /tmp --unshare-all --die-with-parent /bin/echo "test" &>/dev/null; then
+                        echo "✅ Bubblewrap now working with user namespaces!"
+                        return 0
+                    fi
+                fi
+            fi
+        fi
+        
+        # Method 2: Check subuid/subgid
+        if ! grep -q "^$(whoami):" /etc/subuid 2>/dev/null; then
+            echo "Adding subuid/subgid mappings..."
+            echo "$(whoami):100000:65536" | sudo tee -a /etc/subuid >/dev/null
+            echo "$(whoami):100000:65536" | sudo tee -a /etc/subgid >/dev/null
+            # Test again
+            if bwrap --ro-bind / / --tmpfs /tmp --unshare-all --die-with-parent /bin/echo "test" &>/dev/null; then
+                echo "✅ Bubblewrap now working with subuid/subgid!"
+                return 0
+            fi
+        fi
+        
+        # Method 3: Set setuid bit as fallback
+        bwrap_path=$(which bwrap)
+        if [ ! -u "$bwrap_path" ]; then
+            echo "Setting setuid bit on bubblewrap as fallback..."
+            echo "⚠️  Note: This is less secure than AppArmor profiles"
+            if sudo chmod u+s "$bwrap_path"; then
+                echo "✅ Setuid bit set on bubblewrap."
+                # Test again
+                if bwrap --ro-bind / / --tmpfs /tmp --unshare-all --die-with-parent /bin/echo "test" &>/dev/null; then
+                    echo "✅ Bubblewrap now working with setuid!"
+                    return 0
+                fi
+            fi
+        fi
+        
+        echo "❌ Could not fix bubblewrap permissions. Please check your system configuration."
+        return 1
+    else
+        echo "✅ Bubblewrap permissions are working correctly."
+        return 0
+    fi
+}
+
+# Check and fix bubblewrap permissions
+fix_bwrap_permissions || exit 1
+
 # create fake passwd file
 grep "^$(whoami)" /etc/passwd | sed 's#[^\:]*:x:\([0-9\:]*\).*#agent:x:\1Agent:/home/agent:/bin/bash#' > "$HOME/sandboxes/fake_passwd.${SANDBOX_NAME}"
 
